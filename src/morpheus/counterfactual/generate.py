@@ -57,7 +57,7 @@ def get_counterfactual(
         verbosity (int, optional): Verbosity level. Defaults to 0.
         trustscore_kwargs (dict, optional): Dictionary containing the parameters for the trustscore. Defaults to None.
         device (str, optional): Device to use for computation. Defaults to None.
-        model_kwargs (dict, optional): Additional keyword arguments for the model. Defaults to {}.
+        model_kwargs (dict, optional): Additional keyword arguments for the model, such as model class if not using the default classifier models provided. Defaults to {}.
     """
 
     # Get optimal model threshold by maximizing RMSE over validation set
@@ -68,6 +68,7 @@ def get_counterfactual(
         model_path=model_path,
         tumor_name=tumor_name,
         cd8_name=cd8_name,
+        model_kwargs=model_kwargs,
     )
     print(f"Optimal threshold: {opt_cutoff}")
     # Set default values

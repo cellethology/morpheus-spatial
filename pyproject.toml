@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "morpheus-spatial"
-version = "1.0.6"
+version = "1.1.0"
 description = ""
 authors = ["neonine2 <jerry.wang95@yahoo.ca>"]
 readme = "README.md"
@@ -22,6 +22,7 @@ pillow = ">=10.3.0"
 Jinja2 = ">=3.1.4"
 numpy = "<=1.26"
 certifi = ">=2024.7.4"
+psutil = "^7.0.0"
 
 [tool.poetry.extras]
 audio = ["torchaudio"]
@@ -31,6 +32,7 @@ pytest = "^8.1.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.3"
+notebook = "^7.4.1"
 
 [build-system]
 requires = ["poetry-core"]

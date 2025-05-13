@@ -55,6 +55,7 @@ def optimize_threshold_chunked(
     model_path=None,
     tumor_name="Tumor",
     cd8_name="Tcytotoxic",
+    model_kwargs=None,
 ):
     metadata, model = get_metadata_and_model(
         dataset,
@@ -62,6 +63,7 @@ def optimize_threshold_chunked(
         data_split=split,
         remove_small_images=True,
         tumor_col=f"Contains_{tumor_name}",
+        model_kwargs=model_kwargs,
     )
 
     label_col = f"Contains_{cd8_name}"
@@ -78,8 +80,8 @@ def optimize_threshold_chunked(
         rmse.append(np.sqrt(np.mean((pred["pred_binary"] - pred["true"]) ** 2)))
     return thresholds[np.argmin(rmse)]
 
-def load_classifier(model_path, mu, stdev):
-    classifier = load_model(model_path)
+def load_classifier(model_path, mu, stdev, model_kwargs=None):
+    classifier = load_model(model_path, **model_kwargs)
     wrapped_classifier = (
         lambda x: classifier(
             torch.permute(torch.from_numpy((x - mu) / stdev).float(), (0, 3, 1, 2))
@@ -115,6 +117,7 @@ def get_metadata_and_model(
     model_path: str = None,
     remove_small_images: bool = False,
     tumor_col: str = "Contains_Tumor",
+    model_kwargs: dict = None,
 ):
     # load image data and label
     metadata = load_metadata_split(
@@ -134,7 +137,7 @@ def get_metadata_and_model(
 
     # load classifier
     model_path = model_path if model_path is not None else dataset.model_path
-    model = load_classifier(model_path, mu, stdev)
+    model = load_classifier(model_path, mu, stdev, model_kwargs=model_kwargs)
 
     return metadata, model
 

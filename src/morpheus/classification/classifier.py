@@ -1,4 +1,5 @@
 import lightning as light
+from collections import OrderedDict
 import torch
 import torchmetrics.functional.classification as tf_classifier
 from torch import nn
@@ -8,13 +9,25 @@ from torch.nn import functional
 class PatchClassifier(light.LightningModule):
     def __init__(
         self,
-        in_channels,
-        img_size,
+        in_channels=3,
+        img_size=(224, 224),
         arch="unet",
         num_target_classes=2,
         optimizer="adam",
         optimizer_params=None,
+        custom_predictor=None,
     ):
+        """
+        Args:
+            in_channels (int): Number of input channels.
+            img_size (tuple): Size of the input image.
+            arch (str): Model architecture. Options: "unet", "mlp", "lr".
+            num_target_classes (int): Number of target classes.
+            optimizer (str): Optimizer type. Default is "adam".
+            optimizer_params (dict): Optimizer parameters. Default is {"lr": 1e-3}.
+            custom_predictor (torch.nn.Module): Custom predictor model. Default is None.
+        """
+
         super().__init__()
         self.predictor = None
         if optimizer_params is None:
@@ -27,10 +40,13 @@ class PatchClassifier(light.LightningModule):
         # save hyperparameters
         self.save_hyperparameters()
 
-        # build model
-        self.build_model(in_channels, img_size)
+        # Use custom predictor if provided, otherwise build the model
+        if custom_predictor is not None:
+            self.predictor = custom_predictor
+        else:
+            self.build_model(in_channels, img_size)
 
-    def build_model(self, in_channels, img_size):
+    def build_model(self, in_channels=3, img_size=(224, 224)):
         """
         Selects and builds the chosen model architecture.
         """
@@ -125,15 +141,29 @@ class PatchClassifier(light.LightningModule):
 
 def load_model(model_path: str, eval: bool = True, **kwargs):
     """
-    Load the trained model.
+    Flexible model loader that handles both Lightning and vanilla torch.save checkpoints.
 
     Args:
         model_path (str): Path to the model checkpoint.
+        eval (bool): Whether to set the model to evaluation mode.
+        kwargs: Additional arguments passed to model constructor.
 
     Returns:
-        torch.nn.Module: Loaded model.
+        PatchClassifier: Loaded model.
     """
-    model = PatchClassifier.load_from_checkpoint(model_path, **kwargs)
+    if model_path.endswith(".ckpt"):
+        try:
+            model = PatchClassifier.load_from_checkpoint(model_path, **kwargs)
+        except Exception as e:
+            print(f"Error loading model from checkpoint: {e}")
+            print(
+                "Currently .ckpt files are assumed to be PatchClassifier checkpoints."
+            )
+            print("If this is not the case, please provide a valid .pt or .pth file.")
+            raise
+    else:
+        model = torch.load(model_path, map_location="cpu")
+
     if eval:
         model.eval()
     return model
